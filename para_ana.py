@@ -2,6 +2,7 @@ import uproot
 import pandas as pd
 import numpy as np
 import argparse
+import itertools
 import os, sys
 from icecream import ic
 import matplotlib.pyplot as plt
@@ -68,7 +69,8 @@ else:
     DoWipe = False
     DoGen = False
     DoRecon = False
-    DoInspect = True
+    DoInspect = False
+    DoBin = True
 
 
 generator_type = "norad"
@@ -238,6 +240,90 @@ if __name__ == "__main__":
                     saveplot=False,pics_dir="none",plot_title=plot_title,logger=False,first_label="rad",
                     filename="ExamplePlot",units=["GeV","GeV^2"])
 
+    if DoBin:
+        outname = recon_file.split(".")[0]
+        #df = pd.read_pickle(save_base_dir+"100_20211103_1524_merged_Fall_2018_Inbending_gen_all_generated_events_all_generated_events.pkl")
+
+        df = pd.read_pickle(save_base_dir+outname+"_reconstructed_events.pkl")
+
+        four_squared = df[["Q2", "W", "xB", "t", "phi1"]]#.head(10)
+        ic(four_squared)
+
+        qbins = [0, 4,123]
+        qlabels = ['0-1', '4-5']
+        tbins = [0,.2,63]
+        tlabels = ['0-1', '1-12']
+        xBbins = [0, .6, 1.8]
+        xBlabels = ['0-.6', '.6-1']
+        phibins = [0, 120, 360]
+        philabels = ['0-120', '120-360']
+
+        four_squared['qbin'] = pd.cut(four_squared['Q2'], qbins, labels=qlabels)
+        four_squared['tbin'] = pd.cut(four_squared['t'], tbins, labels=tlabels)
+        four_squared['xBbin'] = pd.cut(four_squared['xB'], xBbins, labels=xBlabels)
+        four_squared['phibin'] = pd.cut(four_squared['phi1'], phibins, labels=philabels)
+
+        rude_sum = 0
+
+        num_counts = []
+
+        for qval in qlabels:
+            df_min = four_squared.query("qbin==@qval")
+            if len(df_min.index) == 0:
+                    num_counts.append([0]*len(xBlabels)*len(tlabels)*len(philabels))
+                    print([0]*len(xBlabels)*len(tlabels)*len(philabels))
+                    print("made a triple")
+            else:
+                for xval in xBlabels:
+                    df_min2 = df_min.query("xBbin==@xval")
+                    if len(df_min2.index) == 0:
+                        num_counts.append([0]*len(tlabels)*len(philabels))
+                        print([0]*len(tlabels)*len(philabels))
+                        print("made a triple")
+
+                    else:
+                        for tval in tlabels:
+                            df_min3 = df_min2.query("tbin==@tval")
+                            if len(df_min3.index) == 0:
+                                for i in philabels:
+                                    num_counts.append(0)
+                            else:
+                                for phival in philabels:
+                                    df_min4 = df_min3.query("phibin==@phival")
+                                    print(len(df_min4.index))
+                                    rude_sum += len(df_min4.index)
+                                    num_counts.append(len(df_min4.index))
+
+        #c = list(itertools.product(qlabels, xBlabels, tlabels, philabels))
+        #print(c)
+
+
+        print(num_counts)
+
+        a1 = pd.DataFrame(tlabels,columns=["t"])
+        b1 = pd.DataFrame(philabels,columns=["phi"])
+        f1 = pd.merge(a1,b1,how='cross')
+
+        a = pd.DataFrame(qlabels,columns=["Q"])
+        b = pd.DataFrame(xBlabels,columns=["x"])
+        f = pd.merge(a,b,how='cross')
+
+        ff = pd.merge(f,f1,how='cross')
+        ic(a)
+        ic(b)
+        #f = pd.DataFrame(qlabels, xBlabels, tlabels, philabels,num_counts, columns=['Month','Day','Year','Hour','date'])
+
+        ff['counts'] = num_counts
+        ic(ff)
+        ic(ff.sum())
+        #ic(four_squared)
+
+        #for index, row in four_squared.iterrows():
+        #    for q_ind, q_val in enumerat(qbins):
+        #        if q_val>row["Q2"]:
+                    
+                
+        #    print(row['Q2'], row['xB'])
 
 
 
