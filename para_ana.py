@@ -250,14 +250,19 @@ if __name__ == "__main__":
         ic(four_squared)
 
         qbins = [0, 4,123]
-        qlabels = ['0-1', '4-5']
         tbins = [0,.2,63]
-        tlabels = ['0-1', '1-12']
         xBbins = [0, .6, 1.8]
-        xBlabels = ['0-.6', '.6-1']
         phibins = [0, 120, 360]
-        philabels = ['0-120', '120-360']
 
+        qlabels, xBlabels, tlabels, philabels = [],[] ,[],[]
+
+        bins = [qbins, xBbins, tbins, phibins]
+        labels = [qlabels, xBlabels, tlabels, philabels]
+
+        for label_item,bin_item in zip(labels,bins):
+            for count in range(1,len(qbins)):
+                label_item.append(str(bin_item[count-1])+"-"+str(bin_item[count]))
+        
         four_squared['qbin'] = pd.cut(four_squared['Q2'], qbins, labels=qlabels)
         four_squared['tbin'] = pd.cut(four_squared['t'], tbins, labels=tlabels)
         four_squared['xBbin'] = pd.cut(four_squared['xB'], xBbins, labels=xBlabels)
@@ -294,10 +299,6 @@ if __name__ == "__main__":
                                     rude_sum += len(df_min4.index)
                                     num_counts.append(len(df_min4.index))
 
-        #c = list(itertools.product(qlabels, xBlabels, tlabels, philabels))
-        #print(c)
-
-
         print(num_counts)
 
         a1 = pd.DataFrame(tlabels,columns=["t"])
@@ -316,6 +317,9 @@ if __name__ == "__main__":
         ff['counts'] = num_counts
         ic(ff)
         ic(ff.sum())
+
+        ff.to_pickle(save_base_dir+outname+"_reconstructed_events_binned.pkl")
+        
         #ic(four_squared)
 
         #for index, row in four_squared.iterrows():

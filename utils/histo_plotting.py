@@ -21,39 +21,72 @@ def make_all_histos(df,datatype="Recon",hists_2d=False,hists_1d=False,hists_over
     config = hftm["Ranges"][0]
 
 
+
+
     #Create set of 2D histos from JSON Specifications
     if hists_2d:
         for item in hftm:
             #print("in loop")
 
-            try:
-                hm = hftm[item][0]
-                if hm["type"] == "2D":
+            if datatype=="Truth":
+                try:
+                    hm = hftm[item][0]
+                    if hm["type"] == "2D":
 
 
-                    x_data = df[var_prefix+hm["data_x"]]
-                    y_data = df[var_prefix+hm["data_y"]]
-                    if not x_data.isnull().values.any():
-                        if not y_data.isnull().values.any():
 
-                            var_names = [hm["label_x"],hm["label_y"]]
-                            config_xy = [config[hm["type_x"]],config[hm["type_y"]]]
-                            ranges =  [config_xy[0][0],config_xy[1][0]]
-                            units = [config_xy[0][1],config_xy[1][1]]
-                            title = "{} vs. {}, {}".format(var_names[0],var_names[1],datatype)
-                            filename = hm["filename"] # not currently used!
+                        x_data = df["Gen"+hm["data_x"]]
+                        y_data = df[""+hm["data_x"]]
+                        if not x_data.isnull().values.any():
+                            if not y_data.isnull().values.any():
 
-                            #"Generated Events"
-                            ic(x_data)
-                            ic(y_data)
-                            if not x_data.empty and not y_data.empty:
-                                make_histos.plot_2dhist(x_data,y_data,var_names,ranges,colorbar=True,
-                                                saveplot=saveplots,pics_dir=output_dir+"hists_2D/",plot_title=title.replace("/",""),
-                                                filename=filename,units=units)
-                    else:
-                        print("WARNING: NULL VALUES FOUND FOR {} or {}".format(var_prefix+hm["data_x"],var_prefix+hm["data_y"]))
-            except:
-                print("Exception found, skipping")
+                                var_names = [hm["label_x"],hm["label_x"]]
+                                config_xy = [config[hm["type_x"]],config[hm["type_x"]]]
+                                ranges =  [config_xy[0][0],config_xy[0][0]]
+                                units = [config_xy[0][1],config_xy[0][1]]
+                                title = "{} vs. {}, {}".format("Gen "+var_names[0],var_names[0],datatype)
+                                filename = hm["filename"] # not currently used!
+
+                                #"Generated Events"
+                                ic(x_data)
+                                ic(y_data)
+                                if not x_data.empty and not y_data.empty:
+                                    make_histos.plot_2dhist(x_data,y_data,var_names,ranges,colorbar=True,
+                                                    saveplot=saveplots,pics_dir=output_dir+"hists_2D/",plot_title=title.replace("/",""),
+                                                    filename=filename,units=units)
+                        else:
+                            print("WARNING: NULL VALUES FOUND FOR {} or {}".format(var_prefix+hm["data_x"],var_prefix+hm["data_x"]))
+                except:
+                    print("Exception found, skipping")
+            else:
+                try:
+                    hm = hftm[item][0]
+                    if hm["type"] == "2D":
+
+
+                        x_data = df[var_prefix+hm["data_x"]]
+                        y_data = df[var_prefix+hm["data_y"]]
+                        if not x_data.isnull().values.any():
+                            if not y_data.isnull().values.any():
+
+                                var_names = [hm["label_x"],hm["label_y"]]
+                                config_xy = [config[hm["type_x"]],config[hm["type_y"]]]
+                                ranges =  [config_xy[0][0],config_xy[1][0]]
+                                units = [config_xy[0][1],config_xy[1][1]]
+                                title = "{} vs. {}, {}".format(var_names[0],var_names[1],datatype)
+                                filename = hm["filename"] # not currently used!
+
+                                #"Generated Events"
+                                ic(x_data)
+                                ic(y_data)
+                                if not x_data.empty and not y_data.empty:
+                                    make_histos.plot_2dhist(x_data,y_data,var_names,ranges,colorbar=True,
+                                                    saveplot=saveplots,pics_dir=output_dir+"hists_2D/",plot_title=title.replace("/",""),
+                                                    filename=filename,units=units)
+                        else:
+                            print("WARNING: NULL VALUES FOUND FOR {} or {}".format(var_prefix+hm["data_x"],var_prefix+hm["data_y"]))
+                except:
+                    print("Exception found, skipping")
 
     #Create set of 1D histos
     if hists_1d:
