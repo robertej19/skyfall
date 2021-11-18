@@ -41,8 +41,8 @@ def plot_2dhist(x_data,y_data,var_names,ranges,colorbar=True,
         range=[[xmin,xmax],[ymin,ymax]],norm=mpl.colors.LogNorm())# cmap = plt.cm.nipy_spectral) 
 
     # Adding color bar 
-    # if colorbar:
-    #     plt.colorbar()
+    if colorbar:
+        plt.colorbar()
 
     #plt.tight_layout()  
 
@@ -105,7 +105,7 @@ def plot_1dhist(x_data,vars,ranges="none",second_x="none",logger=False,first_lab
     b = "rad"
     b2="norad"
     plt.hist(x_data, bins =x_bins, range=[xmin,xmax], color='blue', alpha=0.5, label=a)# cmap = plt.cm.nipy_spectral) 
-    if second_x is not "none":
+    if second_x != "none":
         print("printing second histo")
         plt.hist(second_x, bins =x_bins, range=[xmin,xmax],color='red', alpha=0.5, label=a2)# cmap = plt.cm.nipy_spectral) 
 

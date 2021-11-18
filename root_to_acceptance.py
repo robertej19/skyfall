@@ -5,6 +5,9 @@ import argparse
 import itertools
 import os, sys
 from icecream import ic
+import matplotlib
+matplotlib.use('Agg') 
+
 import matplotlib.pyplot as plt
 from copy import copy
 from utils.utils import dot
@@ -79,7 +82,8 @@ def get_files(dirname):
 fs = filestruct.fs()
 
 
-allz = False
+allz = True
+QuickTesting = False
 #All
 if allz:
     DoWipe = True
@@ -133,6 +137,9 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
 
+    if QuickTesting:
+        runs_list = [runs_list[0]]
+        print("Using first run directory only as test: {}".format(runs_list))
     for run in runs_list:
         root_file_list = os.listdir(dirname+run+"/roots/")
         gen_file, recon_file = get_files(dirname+run+"/roots/")
@@ -144,7 +151,7 @@ if __name__ == "__main__":
 
             tree = converter_gen.readFile(dirname+run+"/roots/" + gen_file)
             df_gen_all = converter_gen.readEPGG(tree)
-            ic("saving file to: {}".format(output_loc_event_pkl))
+            #ic("saving file to: {}".format(output_loc_event_pkl))
             df_gen_all.to_pickle(output_loc_event_pkl)
         
             histo_plotting.make_all_histos(df_gen_all,datatype="Gen",
@@ -158,28 +165,129 @@ if __name__ == "__main__":
         if DoRecon:
             outname = recon_file.split(".")[0]
             args.fname = dirname+run+"/roots/" + recon_file
-            output_loc_event_pkl = dirname+run+"/event_pickles/"+outname+"_reconstructed_events.pkl"
-            output_loc_plots = dirname+run+"/plots/"+outname+"/"
-            output_loc_plots_truth = dirname+run+"/plots/"+outname+"_truth/"
+            output_loc_event_pkl_after_cuts = dirname+run+"/event_pickles/"+outname+"_reconstructed_events_after_cuts.pkl"
+            output_loc_plots_after_cuts = dirname+run+"/plots/"+outname+"_after_cuts/"
+            output_loc_plots_truth_after_cuts = dirname+run+"/plots/"+outname+"_truth_after_cuts/"
+
+            output_loc_event_pkl_before_cuts = dirname+run+"/event_pickles/"+outname+"_reconstructed_events_before_cuts.pkl"
+            output_loc_plots_before_cuts = dirname+run+"/plots/"+outname+"_before_cuts/"
+            output_loc_plots_truth_before_cuts = dirname+run+"/plots/"+outname+"_truth_before_cuts/"
+
 
 
             converter = root2pickle(args.fname, entry_stop = args.entry_stop, pol = args.polarity)
-            df = converter.df
-            df.to_pickle(output_loc_event_pkl)
+            df_after_cuts = converter.df_after_cuts
+            df_after_cuts.to_pickle(output_loc_event_pkl_after_cuts)
 
-            histo_plotting.make_all_histos(df,datatype="Recon",
+            df_before_cuts = converter.df_before_cuts
+            df_before_cuts.to_pickle(output_loc_event_pkl_before_cuts)
+
+            print("NOW PLOTTING RECON AFTER CUTS")
+            histo_plotting.make_all_histos(df_after_cuts,datatype="Recon",
                                 hists_2d=True,hists_1d=True,hists_overlap=False,
-                                saveplots=True,output_dir=output_loc_plots)
+                                saveplots=True,output_dir=output_loc_plots_after_cuts)
 
-            histo_plotting.make_all_histos(df,datatype="Truth",
+            print("NOW PLOTTING RECON TRUTH AFTER CUTS")
+
+            histo_plotting.make_all_histos(df_after_cuts,datatype="Truth",
+                                hists_2d=True,hists_1d=False,hists_overlap=False,
+                                saveplots=True,output_dir=output_loc_plots_truth_after_cuts)
+
+            print("NOW PLOTTING RECON BEFORE CUTS")
+
+            histo_plotting.make_all_histos(df_before_cuts,datatype="Recon",
                                 hists_2d=True,hists_1d=True,hists_overlap=False,
-                                saveplots=True,output_dir=output_loc_plots_truth)
+                                saveplots=True,output_dir=output_loc_plots_before_cuts)
 
-            print(df.columns)
-            print(df.head(5))
-            print("Number of events: {}".format(df.shape[0]))
+            print("NOW PLOTTING RECON TRUTH BEFORE CUTS")
+
+            histo_plotting.make_all_histos(df_before_cuts,datatype="Truth",
+                                hists_2d=True,hists_1d=False,hists_overlap=False,
+                                saveplots=True,output_dir=output_loc_plots_truth_before_cuts)
+
+            #print(df_after_cuts.columns)
+            #print(df_after_cuts.head(5))
+            print("Number of events: {}".format(df_after_cuts.shape[0]))
+
+    if DoBin:
+        outname = recon_file.split(".")[0]
+        #df = pd.read_pickle(save_base_dir+"100_20211103_1524_merged_Fall_2018_Inbending_gen_all_generated_events_all_generated_events.pkl")
+
+        df = pd.read_pickle(save_base_dir+outname+"_reconstructed_events.pkl")
+
+        four_squared = df[["Q2", "W", "xB", "t", "phi1"]]#.head(10)
+        ic(four_squared)
 
 
+
+        bins = [fs.q2bins, fs.xBbins, fs.tbins, fs.phibins]
+        if args.test:
+                bins = [fs.q2bins_test, fs.xBbins_test, fs.tbins_test, fs.phibins_test]
+
+        qlabels, xBlabels, tlabels, philabels = [],[] ,[],[]
+
+        labels = [qlabels, xBlabels, tlabels, philabels]
+
+        for label_item,bin_item in zip(labels,bins):
+            for count in range(1,len(qbins)):
+                label_item.append(str(bin_item[count-1])+"-"+str(bin_item[count]))
+        
+        four_squared['qbin'] = pd.cut(four_squared['Q2'], qbins, labels=qlabels)
+        four_squared['tbin'] = pd.cut(four_squared['t'], tbins, labels=tlabels)
+        four_squared['xBbin'] = pd.cut(four_squared['xB'], xBbins, labels=xBlabels)
+        four_squared['phibin'] = pd.cut(four_squared['phi1'], phibins, labels=philabels)
+
+        rude_sum = 0
+
+        num_counts = []
+
+        for qval in qlabels:
+            df_min = four_squared.query("qbin==@qval")
+            if len(df_min.index) == 0:
+                    num_counts.append([0]*len(xBlabels)*len(tlabels)*len(philabels))
+                    print([0]*len(xBlabels)*len(tlabels)*len(philabels))
+                    print("made a triple")
+            else:
+                for xval in xBlabels:
+                    df_min2 = df_min.query("xBbin==@xval")
+                    if len(df_min2.index) == 0:
+                        num_counts.append([0]*len(tlabels)*len(philabels))
+                        print([0]*len(tlabels)*len(philabels))
+                        print("made a triple")
+
+                    else:
+                        for tval in tlabels:
+                            df_min3 = df_min2.query("tbin==@tval")
+                            if len(df_min3.index) == 0:
+                                for i in philabels:
+                                    num_counts.append(0)
+                            else:
+                                for phival in philabels:
+                                    df_min4 = df_min3.query("phibin==@phival")
+                                    print(len(df_min4.index))
+                                    rude_sum += len(df_min4.index)
+                                    num_counts.append(len(df_min4.index))
+
+        print(num_counts)
+
+        a1 = pd.DataFrame(tlabels,columns=["t"])
+        b1 = pd.DataFrame(philabels,columns=["phi"])
+        f1 = pd.merge(a1,b1,how='cross')
+
+        a = pd.DataFrame(qlabels,columns=["Q"])
+        b = pd.DataFrame(xBlabels,columns=["x"])
+        f = pd.merge(a,b,how='cross')
+
+        ff = pd.merge(f,f1,how='cross')
+        ic(a)
+        ic(b)
+        #f = pd.DataFrame(qlabels, xBlabels, tlabels, philabels,num_counts, columns=['Month','Day','Year','Hour','date'])
+
+        ff['counts'] = num_counts
+        ic(ff)
+        ic(ff.sum())
+
+        ff.to_pickle(save_base_dir+outname+"_reconstructed_events_binned.pkl")
 
 sys.exit()
 
@@ -290,85 +398,7 @@ if True:
                     saveplot=False,pics_dir="none",plot_title=plot_title,logger=False,first_label="rad",
                     filename="ExamplePlot",units=["GeV","GeV^2"])
 
-    if DoBin:
-        outname = recon_file.split(".")[0]
-        #df = pd.read_pickle(save_base_dir+"100_20211103_1524_merged_Fall_2018_Inbending_gen_all_generated_events_all_generated_events.pkl")
 
-        df = pd.read_pickle(save_base_dir+outname+"_reconstructed_events.pkl")
-
-        four_squared = df[["Q2", "W", "xB", "t", "phi1"]]#.head(10)
-        ic(four_squared)
-
-
-
-        bins = [fs.q2bins, fs.xBbins, fs.tbins, fs.phibins]
-        if args.test:
-                bins = [fs.q2bins_test, fs.xBbins_test, fs.tbins_test, fs.phibins_test]
-
-        qlabels, xBlabels, tlabels, philabels = [],[] ,[],[]
-
-        labels = [qlabels, xBlabels, tlabels, philabels]
-
-        for label_item,bin_item in zip(labels,bins):
-            for count in range(1,len(qbins)):
-                label_item.append(str(bin_item[count-1])+"-"+str(bin_item[count]))
-        
-        four_squared['qbin'] = pd.cut(four_squared['Q2'], qbins, labels=qlabels)
-        four_squared['tbin'] = pd.cut(four_squared['t'], tbins, labels=tlabels)
-        four_squared['xBbin'] = pd.cut(four_squared['xB'], xBbins, labels=xBlabels)
-        four_squared['phibin'] = pd.cut(four_squared['phi1'], phibins, labels=philabels)
-
-        rude_sum = 0
-
-        num_counts = []
-
-        for qval in qlabels:
-            df_min = four_squared.query("qbin==@qval")
-            if len(df_min.index) == 0:
-                    num_counts.append([0]*len(xBlabels)*len(tlabels)*len(philabels))
-                    print([0]*len(xBlabels)*len(tlabels)*len(philabels))
-                    print("made a triple")
-            else:
-                for xval in xBlabels:
-                    df_min2 = df_min.query("xBbin==@xval")
-                    if len(df_min2.index) == 0:
-                        num_counts.append([0]*len(tlabels)*len(philabels))
-                        print([0]*len(tlabels)*len(philabels))
-                        print("made a triple")
-
-                    else:
-                        for tval in tlabels:
-                            df_min3 = df_min2.query("tbin==@tval")
-                            if len(df_min3.index) == 0:
-                                for i in philabels:
-                                    num_counts.append(0)
-                            else:
-                                for phival in philabels:
-                                    df_min4 = df_min3.query("phibin==@phival")
-                                    print(len(df_min4.index))
-                                    rude_sum += len(df_min4.index)
-                                    num_counts.append(len(df_min4.index))
-
-        print(num_counts)
-
-        a1 = pd.DataFrame(tlabels,columns=["t"])
-        b1 = pd.DataFrame(philabels,columns=["phi"])
-        f1 = pd.merge(a1,b1,how='cross')
-
-        a = pd.DataFrame(qlabels,columns=["Q"])
-        b = pd.DataFrame(xBlabels,columns=["x"])
-        f = pd.merge(a,b,how='cross')
-
-        ff = pd.merge(f,f1,how='cross')
-        ic(a)
-        ic(b)
-        #f = pd.DataFrame(qlabels, xBlabels, tlabels, philabels,num_counts, columns=['Month','Day','Year','Hour','date'])
-
-        ff['counts'] = num_counts
-        ic(ff)
-        ic(ff.sum())
-
-        ff.to_pickle(save_base_dir+outname+"_reconstructed_events_binned.pkl")
         
         #ic(four_squared)
 

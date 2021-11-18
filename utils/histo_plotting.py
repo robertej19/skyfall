@@ -12,7 +12,7 @@ def make_all_histos(df,datatype="Recon",hists_2d=False,hists_1d=False,hists_over
     if datatype=="Gen":
         var_prefix = "Gen"
     vals = df.columns.values
-    ic(vals)
+    #ic(vals)
 
 
     
@@ -34,28 +34,29 @@ def make_all_histos(df,datatype="Recon",hists_2d=False,hists_1d=False,hists_over
                     if hm["type"] == "2D":
 
 
+                        for var_type in ["x","y"]:
+                        
+                            x_data = df["Gen"+hm["data_{}".format(var_type)]]
+                            y_data = df[""+hm["data_{}".format(var_type)]]
+                            if not x_data.isnull().values.any():
+                                if not y_data.isnull().values.any():
 
-                        x_data = df["Gen"+hm["data_x"]]
-                        y_data = df[""+hm["data_x"]]
-                        if not x_data.isnull().values.any():
-                            if not y_data.isnull().values.any():
+                                    var_names = ["Gen "+hm["label_{}".format(var_type)],"Recon " + hm["label_{}".format(var_type)]]
+                                    config_xy = [config[hm["type_{}".format(var_type)]],config[hm["type_{}".format(var_type)]]]
+                                    ranges =  [config_xy[0][0],config_xy[0][0]]
+                                    units = [config_xy[0][1],config_xy[0][1]]
+                                    title = "{} vs. {}".format(var_names[0],var_names[0])
+                                    filename = hm["filename"] # not currently used!
 
-                                var_names = [hm["label_x"],hm["label_x"]]
-                                config_xy = [config[hm["type_x"]],config[hm["type_x"]]]
-                                ranges =  [config_xy[0][0],config_xy[0][0]]
-                                units = [config_xy[0][1],config_xy[0][1]]
-                                title = "{} vs. {}, {}".format("Gen "+var_names[0],var_names[0],datatype)
-                                filename = hm["filename"] # not currently used!
-
-                                #"Generated Events"
-                                ic(x_data)
-                                ic(y_data)
-                                if not x_data.empty and not y_data.empty:
-                                    make_histos.plot_2dhist(x_data,y_data,var_names,ranges,colorbar=True,
-                                                    saveplot=saveplots,pics_dir=output_dir+"hists_2D/",plot_title=title.replace("/",""),
-                                                    filename=filename,units=units)
-                        else:
-                            print("WARNING: NULL VALUES FOUND FOR {} or {}".format(var_prefix+hm["data_x"],var_prefix+hm["data_x"]))
+                                    #"Generated Events"
+                                    #ic(x_data)
+                                    #ic(y_data)
+                                    if not x_data.empty and not y_data.empty:
+                                        make_histos.plot_2dhist(x_data,y_data,var_names,ranges,colorbar=True,
+                                                        saveplot=saveplots,pics_dir=output_dir+"hists_2D/",plot_title=title.replace("/",""),
+                                                        filename=filename,units=units)
+                            else:
+                                print("WARNING: NULL VALUES FOUND FOR {} or {}".format(var_prefix+hm["data_{}".format(var_type)],var_prefix+hm["data_{}".format(var_type)]))
                 except:
                     print("Exception found, skipping")
             else:
@@ -77,8 +78,8 @@ def make_all_histos(df,datatype="Recon",hists_2d=False,hists_1d=False,hists_over
                                 filename = hm["filename"] # not currently used!
 
                                 #"Generated Events"
-                                ic(x_data)
-                                ic(y_data)
+                                #ic(x_data)
+                                #ic(y_data)
                                 if not x_data.empty and not y_data.empty:
                                     make_histos.plot_2dhist(x_data,y_data,var_names,ranges,colorbar=True,
                                                     saveplot=saveplots,pics_dir=output_dir+"hists_2D/",plot_title=title.replace("/",""),

@@ -458,9 +458,14 @@ class root2pickle():
         cut_sector = (df_epgg.loc[:, "Esector"]!=df_epgg.loc[:, "Gsector"]) & (df_epgg.loc[:, "Esector"]!=df_epgg.loc[:, "Gsector2"])
         cut_Vz = np.abs(df_epgg["Evz"] - df_epgg["Pvz"]) < 2.5 + 2.5 / mag([df_epgg["Ppx"], df_epgg["Ppy"], df_epgg["Ppz"]])
 
-        #df_dvpi0 = df_epgg.loc[cut_xBupper & cut_xBlower & cut_Q2 & cut_W & cut_proton & cut_mmep & cut_meepgg & cut_Vz &
-        #                   cut_mpt & cut_recon & cut_pi0upper & cut_pi0lower & cut_sector, :]
-        df_dvpi0 = df_epgg
+        
+        # FOR ALL CUTS
+        df_dvpi0 = df_epgg.loc[cut_xBupper & cut_xBlower & cut_Q2 & cut_W & cut_proton & cut_mmep & cut_meepgg & cut_Vz &
+                           cut_mpt & cut_recon & cut_pi0upper & cut_pi0lower & cut_sector, :]
+        
+        # FOR NO CUTS
+        #df_dvpi0 = df_epgg
+        
         #For an event, there can be two gg's passed conditions above.
         #Take only one gg's that makes pi0 invariant mass
         #This case is very rare.
@@ -473,8 +478,10 @@ class root2pickle():
     def saveRaw(self):
         df_x = self.df_dvpi0
         df_z = self.df_z
-        df = pd.merge(df_x, df_z, how = 'inner', on='event')
-        self.df = df
+        df_after_cuts = pd.merge(df_x, df_z, how = 'inner', on='event')
+        self.df_after_cuts = df_after_cuts
+        df_before_cuts = pd.merge(self.df_epgg, df_z, how = 'inner', on='event')
+        self.df_before_cuts = df_before_cuts
 
 
 if __name__ == "__main__":
