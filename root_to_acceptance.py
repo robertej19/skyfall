@@ -83,7 +83,7 @@ fs = filestruct.fs()
 
 
 allz = True
-QuickTesting = True
+QuickTesting = False
 #All
 if allz:
     DoWipe = True
@@ -91,13 +91,19 @@ if allz:
     DoRecon = True
     DoInspect = True
     DoBin = True
+    DoCombine = True
+    DoMetaCombine = True
 #Just ana
 else:
     DoWipe = False
     DoGen = False
-    DoRecon = True
+    DoRecon = False
     DoInspect = False
-    DoBin = True
+    DoBin = False
+    DoCombine = True
+    DoMetaCombine = True
+
+
 
 base_dir = "/mnt/d/GLOBUS/CLAS12/simulations/production/F2018_In_Norad"
 # To add data to this base dir, make a subdir /runs/<run_number>/roots and put the files there
@@ -148,18 +154,20 @@ if __name__ == "__main__":
         gen_file, recon_file = get_files(dirname+run+"/roots/")
 
         rec_out_name = recon_file.split(".")[0]
-        output_loc_event_pkl_after_cuts = dirname+run+"/event_pickles/"+rec_out_name+"_reconstructed_events_after_cuts.pkl"
+        gen_out_name = gen_file.split(".")[0]
 
+        output_loc_event_pkl_after_cuts =     dirname+run+"/event_pickles/"+rec_out_name+"_reconstructed_events_after_cuts.pkl"
+        output_loc_event_pkl_all_gen_events = dirname+run+"/event_pickles/"+gen_out_name+"_all_generated_events.pkl"
 
         if DoGen:
-            outname = gen_file.split(".")[0]+"_all_generated_events"
+            outname = gen_out_name+"_all_generated_events"
             output_loc_event_pkl = dirname+run+"/event_pickles/"+outname+"_all_generated_events.pkl"
             output_loc_plots = dirname+run+"/plots/"+outname+"/"
 
             tree = converter_gen.readFile(dirname+run+"/roots/" + gen_file)
             df_gen_all = converter_gen.readEPGG(tree)
             #ic("saving file to: {}".format(output_loc_event_pkl))
-            df_gen_all.to_pickle(output_loc_event_pkl)
+            df_gen_all.to_pickle(output_loc_event_pkl_all_gen_events)
         
             histo_plotting.make_all_histos(df_gen_all,datatype="Gen",
                 hists_2d=True,hists_1d=True,hists_overlap=False,
@@ -215,83 +223,153 @@ if __name__ == "__main__":
             #print(df_after_cuts.head(5))
             print("Number of events: {}".format(df_after_cuts.shape[0]))
 
-    if DoBin:
-        #outname = recon_file.split(".")[0]
-        #output_loc_event_pkl_after_cuts = dirname+run+"/binned_pickles/"+outname+"_reconstructed_events_after_cuts.pkl"
-        df = pd.read_pickle(output_loc_event_pkl_after_cuts)
-        #df = pd.read_pickle(save_base_dir+"100_20211103_1524_merged_Fall_2018_Inbending_gen_all_generated_events_all_generated_events.pkl")
-        for col in df.columns:
-            print(col)
+        if DoBin:
+            #outname = recon_file.split(".")[0]
+            #output_loc_event_pkl_after_cuts = dirname+run+"/binned_pickles/"+outname+"_reconstructed_events_after_cuts.pkl"
+            df = pd.read_pickle(output_loc_event_pkl_after_cuts)
+            df_gen = pd.read_pickle(output_loc_event_pkl_all_gen_events)
+            #df = pd.read_pickle(save_base_dir+"100_20211103_1524_merged_Fall_2018_Inbending_gen_all_generated_events_all_generated_events.pkl")
+            for col in df.columns:
+                print(col)
 
-        df_recon = df[["Q2", "W", "xB", "t", "phi1"]]
-        df_gen = df[["GenQ2", "GenW", "GenxB", "Gent1", "Genphi1"]]
+            df['t1'] = df['t']
+            orginial_sum = df.shape[0]
 
-        dfs = [df_recon, df_gen]
+            df_recon = df[["Q2", "W", "xB", "t1", "phi1"]]
+            df_gen = df_gen[["GenQ2", "GenW", "GenxB", "Gent1", "Genphi1"]]
 
-        for index,df in enumerate(dfs):
-            prefix = "Gen" if index == 0 else ""
-            four_squared = df #.head(10)
-            ic(four_squared)
+            dfs = [df_recon, df_gen]
+
+            for index,df in enumerate(dfs):
+                prefix = "Gen" if index == 1 else ""
+                four_squared = df #.head(10)
+                ic(four_squared)
 
 
-            args.test = True
-            q2bins,xBbins, tbins, phibins = fs.q2bins, fs.xBbins, fs.tbins, fs.phibins
-            if args.test:
-                    q2bins,xBbins, tbins, phibins = fs.q2bins_test, fs.xBbins_test, fs.tbins_test, fs.phibins_test
+                args.test = False
+                q2bins,xBbins, tbins, phibins = fs.q2bins, fs.xBbins, fs.tbins, fs.phibins
+                if args.test:
+                        q2bins,xBbins, tbins, phibins = fs.q2bins_test, fs.xBbins_test, fs.tbins_test, fs.phibins_test
 
-            bins = [q2bins,xBbins, tbins, phibins]
-            qlabels, xBlabels, tlabels, philabels = [],[] ,[],[]
+                bins = [q2bins,xBbins, tbins, phibins]
+                qlabels, xBlabels, tlabels, philabels = [],[] ,[],[]
 
-            labels = [qlabels, xBlabels, tlabels, philabels]
+                labels = [qlabels, xBlabels, tlabels, philabels]
 
-            for label_item,bin_item in zip(labels,bins):
-                for count in range(1,len(q2bins)):
-                    label_item.append(str(bin_item[count-1])+"-"+str(bin_item[count]))
-            
-            four_squared['qbin'] = pd.cut(four_squared[prefix+'Q2'], q2bins, labels=qlabels)
-            four_squared['tbin'] = pd.cut(four_squared[prefix+'t'], tbins, labels=tlabels)
-            four_squared['xBbin'] = pd.cut(four_squared[prefix+'xB'], xBbins, labels=xBlabels)
-            four_squared['phibin'] = pd.cut(four_squared[prefix+'phi1'], phibins, labels=philabels)
+                for label_item,bin_item in zip(labels,bins):
+                    for count in range(1,len(bin_item)):
+                        label_item.append(str(bin_item[count-1])+"-"+str(bin_item[count]))
+                
+                four_squared['qbin'] = pd.cut(four_squared[prefix+'Q2'], q2bins, labels=qlabels)
+                four_squared['tbin'] = pd.cut(four_squared[prefix+'t1'], tbins, labels=tlabels)
+                four_squared['xBbin'] = pd.cut(four_squared[prefix+'xB'], xBbins, labels=xBlabels)
+                four_squared['phibin'] = pd.cut(four_squared[prefix+'phi1'], phibins, labels=philabels)
 
-            rude_sum = 0
-            num_counts = []
+                rude_sum = 0
+                num_counts = []
 
-            for qval in qlabels:
-                df_min = four_squared.query("qbin==@qval")
-                if len(df_min.index) == 0:
-                        num_counts.append([0]*len(xBlabels)*len(tlabels)*len(philabels))
-                        print([0]*len(xBlabels)*len(tlabels)*len(philabels))
-                        print("made a triple")
-                else:
-                    for xval in xBlabels:
-                        df_min2 = df_min.query("xBbin==@xval")
-                        if len(df_min2.index) == 0:
-                            num_counts.append([0]*len(tlabels)*len(philabels))
-                            print([0]*len(tlabels)*len(philabels))
-                            print("made a triple")
-                        else:
-                            for tval in tlabels:
-                                df_min3 = df_min2.query("tbin==@tval")
-                                if len(df_min3.index) == 0:
+                for qval in qlabels:
+                    df_min = four_squared.query("qbin==@qval")
+                    if len(df_min.index) == 0:
+                            #fix this in the future so don't have nested for lops:
+                            for iii in xBlabels:
+                                for ii in tlabels:
                                     for i in philabels:
-                                        num_counts.append(0)
-                                else:
-                                    for phival in philabels:
-                                        df_min4 = df_min3.query("phibin==@phival")
-                                        print(len(df_min4.index))
-                                        rude_sum += len(df_min4.index)
-                                        num_counts.append(len(df_min4.index))
+                                            num_counts.append(0)
+                            #num_counts.append([0]*len(xBlabels)*len(tlabels)*len(philabels))
+                            #print([0]*len(xBlabels)*len(tlabels)*len(philabels))
+                            #print("made a triple")
+                    else:
+                        for xval in xBlabels:
+                            df_min2 = df_min.query("xBbin==@xval")
+                            if len(df_min2.index) == 0:
+                                for ii in tlabels:
+                                    for i in philabels:
+                                            num_counts.append(0)
+                                #num_counts.append([0]*len(tlabels)*len(philabels))
+                                #print([0]*len(tlabels)*len(philabels))
+                                #print("made a triple")
+                            else:
+                                for tval in tlabels:
+                                    df_min3 = df_min2.query("tbin==@tval")
+                                    if len(df_min3.index) == 0:
+                                        for i in philabels:
+                                            num_counts.append(0)
+                                    else:
+                                        for phival in philabels:
+                                            df_min4 = df_min3.query("phibin==@phival")
+                                            print(len(df_min4.index))
+                                            rude_sum += len(df_min4.index)
+                                            num_counts.append(len(df_min4.index))
 
-            col_t = pd.DataFrame(tlabels,columns=["t"])
-            col_phi = pd.DataFrame(philabels,columns=["phi"])
-            df_t_phi = pd.merge(col_t,col_phi,how='cross')
-            col_q2 = pd.DataFrame(qlabels,columns=["Q"])
-            col_xb = pd.DataFrame(xBlabels,columns=["x"])
-            df_q2_xb = pd.merge(col_q2,col_xb,how='cross')
-            df = pd.merge(df_t_phi,df_q2_xb,how='cross')
-            df[prefix+'counts'] = num_counts
-            print("Total number of binned events: {}".format(df[prefix+'counts'].sum()))
-            df.to_pickle(save_base_dir+outname+prefix+"_reconstructed_events_binned.pkl")
+                col_t = pd.DataFrame(tlabels,columns=["t1"])
+                col_phi = pd.DataFrame(philabels,columns=["phi"])
+                df_t_phi = pd.merge(col_t,col_phi,how='cross')
+                col_q2 = pd.DataFrame(qlabels,columns=["Q2"])
+                col_xb = pd.DataFrame(xBlabels,columns=["xB"])
+                df_q2_xb = pd.merge(col_q2,col_xb,how='cross')
+                df = pd.merge(df_t_phi,df_q2_xb,how='cross')
+                df[prefix+'counts'] = num_counts
+                print("Total number of binned events: {}".format(df[prefix+'counts'].sum()))
+                print("Total number of original events: {}".format(orginial_sum))
+                df.to_pickle(dirname+run+"/binned_pickles/"+rec_out_name+prefix+"_reconstructed_events_binned.pkl")
+
+    if DoCombine:
+        #runs_list = [runs_list[0]]
+        for run in runs_list:
+
+            root_file_list = os.listdir(dirname+run+"/roots/")
+            gen_file, recon_file = get_files(dirname+run+"/roots/")
+
+            rec_out_name = recon_file.split(".")[0]
+            gen_out_name = gen_file.split(".")[0]
+
+            recon_df_loc = dirname+run+"/binned_pickles/"+rec_out_name+"_reconstructed_events_binned.pkl"
+            gen_df_loc = dirname+run+"/binned_pickles/"+rec_out_name+"Gen_reconstructed_events_binned.pkl"
+
+            if os.path.isfile(recon_df_loc) and os.path.isfile(gen_df_loc):
+                rec_df = pd.read_pickle(recon_df_loc)
+                gen_df = pd.read_pickle(gen_df_loc)
+
+                ic(rec_df)
+                ic(gen_df)
+                df = pd.concat([rec_df, gen_df['Gencounts']], axis=1)
+                ic(df)
+                print("Saved to {}".format(dirname+run+"/rec_and_gen_binned_events.pkl"))
+                df.to_pickle(dirname+run+"/rec_and_gen_binned_events.pkl")
+             
+    if DoMetaCombine:
+        for index,run in enumerate(runs_list):
+            binned_loc = dirname+run+"/rec_and_gen_binned_events.pkl"
+            if os.path.isfile(binned_loc):
+                df = pd.read_pickle(binned_loc)
+                print(df['counts'].sum(),df['Gencounts'].sum())
+                if index == 0:
+                    df_all = df[["Q2","xB","t1","phi"]]
+                    df_all['rec_0'] = df['counts']
+                    df_all['gen_0'] = df['Gencounts']
+                else:
+                    df_all['rec_{}'.format(index)] = df['counts']
+                    df_all['gen_{}'.format(index)] = df['Gencounts']
+
+                ic(df_all)
+            
+        rec_cols = [col for col in df_all if col.startswith('rec')]
+        gen_cols = [col for col in df_all if col.startswith('gen')]
+
+        df_all['rec_sum'] = df_all[rec_cols].sum(axis=1)
+        df_all['gen_sum'] = df_all[gen_cols].sum(axis=1)
+
+        df_all['acceptance'] = df_all['rec_sum']/df_all['gen_sum']
+        df_all['acceptance_err'] = df_all['rec_sum']/df_all['gen_sum']*np.sqrt(1/df_all['rec_sum']+1/df_all['gen_sum'])
+
+        df_all.to_pickle(dirname+"/rec_and_gen_binned_events_meta.pkl")
+
+        ic(df_all)
+
+
+            
+
 
 sys.exit()
 

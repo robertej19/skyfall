@@ -76,9 +76,43 @@
         "type_x":"phitrento",
         "type_y":"theta",
         "label_x":"Lepton-Hadron Angle $\\phi$",
-        "label_y":"Photon $\\theta$",
+        "label_y":"Proton $\\theta$",
         "filename":"PhiTrento_PTheta"       
     }],
+
+    "TrentoQ2": [{
+        "type":"2D",
+        "data_x":"phi1",
+        "data_y":"Q2",
+        "type_x":"phitrento",
+        "type_y":"Q2",
+        "label_x":"Lepton-Hadron Angle $\\phi$",
+        "label_y":"$Q^2$",
+        "filename":"PhiTrento_Q2"       
+    }],
+
+    "TrentoxB": [{
+        "type":"2D",
+        "data_x":"phi1",
+        "data_y":"xB",
+        "type_x":"phitrento",
+        "type_y":"xB",
+        "label_x":"Lepton-Hadron Angle $\\phi$",
+        "label_y":"$x_B$",
+        "filename":"PhiTrento_BjorkenX"       
+    }],
+
+    "Trentot": [{
+        "type":"2D",
+        "data_x":"phi1",
+        "data_y":"t",
+        "type_x":"phitrento",
+        "type_y":"t",
+        "label_x":"Lepton-Hadron Angle $\\phi$",
+        "label_y":"Momentum Transfer t",
+        "filename":"PhiTrento_t"       
+    }],
+
 
     "WQ2": [{
         "type":"2D",

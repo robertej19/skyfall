@@ -128,7 +128,7 @@ def plot_1dhist(x_data,vars,ranges="none",second_x="none",logger=False,first_lab
 
     if saveplot:
         new_plot_title = plot_title.replace("/","").replace(" ","_").replace("$","").replace("^","").replace("\\","").replace(".","").replace("<","").replace(">","")
-        print(new_plot_title)
+        #print(new_plot_title)
         
 
         #print(pics_dir)
