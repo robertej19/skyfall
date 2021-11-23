@@ -6,7 +6,7 @@ import itertools
 import os, sys
 from icecream import ic
 import matplotlib
-matplotlib.use('Agg') 
+#matplotlib.use('Agg') 
 
 import matplotlib.pyplot as plt
 from copy import copy
@@ -90,6 +90,7 @@ if allz:
     DoGen = True
     DoRecon = True
     DoInspect = True
+    DoPlot = False
     DoBin = True
     DoCombine = True
     DoMetaCombine = True
@@ -99,7 +100,7 @@ else:
     DoGen = False
     DoRecon = False
     DoInspect = False
-    DoBin = False
+    DoBin = True
     DoCombine = True
     DoMetaCombine = True
 
@@ -113,7 +114,7 @@ if base_dir[-1] != '/':
 
 dirname = base_dir+"runs/"
 #print(os.listdir(dirname))
-runs_list = os.listdir(dirname)
+runs_list = [run for run in os.listdir(dirname) if os.path.isdir(dirname+"/"+run)]
 
 
 dir_ending_list = ["/event_pickles/", "/plots/", "/binned_pickles/"]
@@ -148,6 +149,8 @@ if __name__ == "__main__":
     if QuickTesting:
         runs_list = [runs_list[0]]
         print("Using first run directory only as test: {}".format(runs_list))
+
+    print("starting analysis")
     for run in runs_list:
 
         root_file_list = os.listdir(dirname+run+"/roots/")
@@ -169,9 +172,10 @@ if __name__ == "__main__":
             #ic("saving file to: {}".format(output_loc_event_pkl))
             df_gen_all.to_pickle(output_loc_event_pkl_all_gen_events)
         
-            histo_plotting.make_all_histos(df_gen_all,datatype="Gen",
-                hists_2d=True,hists_1d=True,hists_overlap=False,
-                saveplots=True,output_dir=output_loc_plots)
+            if DoPlot:
+                histo_plotting.make_all_histos(df_gen_all,datatype="Gen",
+                    hists_2d=True,hists_1d=True,hists_overlap=False,
+                    saveplots=True,output_dir=output_loc_plots)
 
             print(df_gen_all.columns)
             print(df_gen_all.head(5))
@@ -196,28 +200,29 @@ if __name__ == "__main__":
             df_before_cuts = converter.df_before_cuts
             df_before_cuts.to_pickle(output_loc_event_pkl_before_cuts)
 
-            print("NOW PLOTTING RECON AFTER CUTS")
-            histo_plotting.make_all_histos(df_after_cuts,datatype="Recon",
-                                hists_2d=True,hists_1d=True,hists_overlap=False,
-                                saveplots=True,output_dir=output_loc_plots_after_cuts)
+            if DoPlot:
+                print("NOW PLOTTING RECON AFTER CUTS")
+                histo_plotting.make_all_histos(df_after_cuts,datatype="Recon",
+                                    hists_2d=True,hists_1d=True,hists_overlap=False,
+                                    saveplots=True,output_dir=output_loc_plots_after_cuts)
 
-            print("NOW PLOTTING RECON TRUTH AFTER CUTS")
+                print("NOW PLOTTING RECON TRUTH AFTER CUTS")
 
-            histo_plotting.make_all_histos(df_after_cuts,datatype="Truth",
-                                hists_2d=True,hists_1d=False,hists_overlap=False,
-                                saveplots=True,output_dir=output_loc_plots_truth_after_cuts)
+                histo_plotting.make_all_histos(df_after_cuts,datatype="Truth",
+                                    hists_2d=True,hists_1d=False,hists_overlap=False,
+                                    saveplots=True,output_dir=output_loc_plots_truth_after_cuts)
 
-            print("NOW PLOTTING RECON BEFORE CUTS")
+                print("NOW PLOTTING RECON BEFORE CUTS")
 
-            histo_plotting.make_all_histos(df_before_cuts,datatype="Recon",
-                                hists_2d=True,hists_1d=True,hists_overlap=False,
-                                saveplots=True,output_dir=output_loc_plots_before_cuts)
+                histo_plotting.make_all_histos(df_before_cuts,datatype="Recon",
+                                    hists_2d=True,hists_1d=True,hists_overlap=False,
+                                    saveplots=True,output_dir=output_loc_plots_before_cuts)
 
-            print("NOW PLOTTING RECON TRUTH BEFORE CUTS")
+                print("NOW PLOTTING RECON TRUTH BEFORE CUTS")
 
-            histo_plotting.make_all_histos(df_before_cuts,datatype="Truth",
-                                hists_2d=True,hists_1d=False,hists_overlap=False,
-                                saveplots=True,output_dir=output_loc_plots_truth_before_cuts)
+                histo_plotting.make_all_histos(df_before_cuts,datatype="Truth",
+                                    hists_2d=True,hists_1d=False,hists_overlap=False,
+                                    saveplots=True,output_dir=output_loc_plots_truth_before_cuts)
 
             #print(df_after_cuts.columns)
             #print(df_after_cuts.head(5))
@@ -227,6 +232,21 @@ if __name__ == "__main__":
             #outname = recon_file.split(".")[0]
             #output_loc_event_pkl_after_cuts = dirname+run+"/binned_pickles/"+outname+"_reconstructed_events_after_cuts.pkl"
             df = pd.read_pickle(output_loc_event_pkl_after_cuts)
+            #df = df.query("Q2 > 2 and Q2 < 2.5 and xB < 0.38 and xB>0.3 and t>0.2 and t<0.3")
+
+            # print(df.shape)
+
+            # x_data = df["phi1"]
+            # plot_title = "F 2018 Inbending, epgg, all exclusivity cuts"
+
+            # #plot_title = "F 2018 Inbending, epgg, no exclusivity cuts"
+
+            # vars = ["XB (GeV)"]
+            # make_histos.plot_1dhist(x_data,vars,ranges="none",second_x="none",logger=False,first_label="F18IN",second_label="norad",
+            #             saveplot=False,pics_dir="none",plot_title=plot_title,first_color="blue",sci_on=False)
+
+            # sys.exit()
+
             df_gen = pd.read_pickle(output_loc_event_pkl_all_gen_events)
             #df = pd.read_pickle(save_base_dir+"100_20211103_1524_merged_Fall_2018_Inbending_gen_all_generated_events_all_generated_events.pkl")
             for col in df.columns:
@@ -235,18 +255,20 @@ if __name__ == "__main__":
             df['t1'] = df['t']
             orginial_sum = df.shape[0]
 
+            
             df_recon = df[["Q2", "W", "xB", "t1", "phi1"]]
             df_gen = df_gen[["GenQ2", "GenW", "GenxB", "Gent1", "Genphi1"]]
 
             dfs = [df_recon, df_gen]
 
             for index,df in enumerate(dfs):
+                print("Binning df: {}".format(df))
                 prefix = "Gen" if index == 1 else ""
                 four_squared = df #.head(10)
                 ic(four_squared)
 
 
-                args.test = False
+                args.test = True
                 q2bins,xBbins, tbins, phibins = fs.q2bins, fs.xBbins, fs.tbins, fs.phibins
                 if args.test:
                         q2bins,xBbins, tbins, phibins = fs.q2bins_test, fs.xBbins_test, fs.tbins_test, fs.phibins_test
@@ -269,8 +291,10 @@ if __name__ == "__main__":
                 num_counts = []
 
                 for qval in qlabels:
+                    ic(qval)
                     df_min = four_squared.query("qbin==@qval")
                     if len(df_min.index) == 0:
+                            print("no events found")
                             #fix this in the future so don't have nested for lops:
                             for iii in xBlabels:
                                 for ii in tlabels:
@@ -281,8 +305,10 @@ if __name__ == "__main__":
                             #print("made a triple")
                     else:
                         for xval in xBlabels:
+                            ic(xval)
                             df_min2 = df_min.query("xBbin==@xval")
                             if len(df_min2.index) == 0:
+                                print("no events found")
                                 for ii in tlabels:
                                     for i in philabels:
                                             num_counts.append(0)
@@ -291,8 +317,10 @@ if __name__ == "__main__":
                                 #print("made a triple")
                             else:
                                 for tval in tlabels:
+                                    ic(tval)
                                     df_min3 = df_min2.query("tbin==@tval")
                                     if len(df_min3.index) == 0:
+                                        print("no events found")
                                         for i in philabels:
                                             num_counts.append(0)
                                     else:

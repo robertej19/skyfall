@@ -58,44 +58,59 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 
-# xbs = np.arange(start=.2, stop=.3, step=.001)
-# q2s = np.arange(start=2, stop=3.5, step=.01)
+xbs = np.arange(start=.1, stop=.6, step=.001)
+q2s = np.arange(start=1, stop=6, step=.01)
 
-# xv, yv = np.meshgrid(xbs, q2s)
+xv, yv = np.meshgrid(xbs, q2s)
 
-xv = .2
-yv = 3.5
+
 def get_ratios(x,q2):
     epsis = []
     gammas = []
-    energies = [5.776, 10.604]
+    a8p = 1/137*(1/(8*3.14159))
+    #print(a8p)
+    energies = [5.75, 10.604]
     for e in energies:
-        s = e*e+0.938*0.938
+        s = 2*0.938*e+0.938*0.938
         y = q2/(s*x)
         num = 1-y-q2/(4*e*e)
         denom = 1- y + y*y/2 + q2/(4*e*e)
-        print(y,q2,e,num,denom)
+        #print(y,q2,e,num,denom)
         epsi = num/denom
-        gamma = 1/(e*e)*(1/(1-epsi))
+        gamma = 1/(e*e)*(1/(1-epsi))*(1-x)/(x*x*x)*a8p*q2/(0.938*.938)
         epsis.append(epsi)
+        #print(epsi)
         gammas.append(gamma)
+        print(gamma)
     gamr = gammas[0]/gammas[1]
     epsr = epsis[0]/epsis[1]
 
-    return gamr, epsr
+    return 1/gamr, epsr
+
+# g, e = get_ratios(.2,3.5)
+# print(1/g)
+#for x in [0.1,0.15,0.2,0.3,0.4,0.5,0.6]:
+#     for q2 in [1,2,3,4,5,6]:
+#         g,e = get_ratios(x,q2)
+#     
 
 #for x in xbs:
 #    for q2 in q2s:
 
-g,e = get_ratios(xv, yv)
+g,e = get_ratios(xv,yv)
 
+g[g<0] =0
 print(g)
-# g[g<0] =0
-# print(g)
-# fig, ax = plt.subplots(figsize =(14, 10)) 
-# h = plt.pcolormesh(xbs, q2s, g)
-# plt.xlim(.2,.3)
-# plt.ylim(2,3.5)
-# plt.colorbar(h)
-# #plt.axis('scaled')
-# plt.show()
+plt.rcParams["font.size"] = "20"
+
+fig, ax = plt.subplots(figsize =(14, 10)) 
+h = plt.pcolormesh(xbs, q2s, g)
+plt.title('Ratio of Gamma (Clas12/Clas6)')
+plt.xlabel('Xb')
+plt.ylabel('Q2 (GeV$^2$)')
+#h = plt.contour(xv, yv, g, cmap='RdGy');
+#plt.xlim(.2,.3)
+#plt.ylim(2,3.5)
+plt.colorbar(h)
+#plt.axis('scaled')
+plt.show()

@@ -184,31 +184,25 @@ else:
     plot_out_dir = base_dir + "combined_plots/"
 
 if TEST:
-    binned_pkl = "rec_and_gen_binned_events_meta_test_binning.pkl"
+    binned_pkl = "rec_and_gen_binned_events_meta_test2_binning.pkl"
 else:
     binned_pkl = "rec_and_gen_binned_events_meta.pkl"
 
 
 df = pd.read_pickle(base_dir + binned_pkl)
-if TEST:
-    df = df[["Q","x","t","phi","rec_sum","gen_sum"]]
-else:
-    df = df[["Q2","xB","t1","phi","rec_sum","gen_sum"]]
+df = df[["Q2","xB","t1","phi","rec_sum","gen_sum"]]
 
-if TEST:
-    t_bins = df['t'].unique()
-    q_bins = df['Q'].unique()
-    x_bins = df['x'].unique()
-    p_bins = df['phi'].unique()
-else:
-    t_bins = df['t1'].unique()
-    q_bins = df['Q2'].unique()
-    x_bins = df['xB'].unique()
-    p_bins = df['phi'].unique()
+
+t_bins = df['t1'].unique()
+q_bins = df['Q2'].unique()
+x_bins = df['xB'].unique()
+p_bins = df['phi'].unique()
 
 TEST2 = False
 if TEST2:
     t_bins = [t_bins[0]]
+
+print(t_bins)
 for t_bin in t_bins:
     #figures = os.listdir(base_plot_dir+"/"+str(t_bin))
 
