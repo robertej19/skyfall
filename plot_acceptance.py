@@ -81,7 +81,7 @@ else:
 
 
 
-base_dir = "/mnt/d/GLOBUS/CLAS12/simulations/production/F2018_In_Norad"
+base_dir = "/mnt/d/GLOBUS/CLAS12/simulations/production/F2018_In_Norad/runs"
 # To add data to this base dir, make a subdir /runs/<run_number>/roots and put the files there
 # Note that dataset 101 is just for testing
 if base_dir[-1] != '/':
@@ -92,17 +92,14 @@ else:
     base_plot_dir = base_dir + "plots/"
 
 if TEST:
-    binned_pkl = "rec_and_gen_binned_events_meta_test2_binning.pkl"
+    binned_pkl = "rec_and_gen_binned_events_meta.pkl"
 else:
     binned_pkl = "rec_and_gen_binned_events_meta.pkl"
 
 
 df = pd.read_pickle(base_dir + binned_pkl)
-if TEST:
-    #df = df[["Q","x","t","phi","rec_sum","gen_sum"]]
-    df = df[["Q2","xB","t1","phi","rec_sum","gen_sum"]]
-else:
-    df = df[["Q2","xB","t1","phi","rec_sum","gen_sum"]]
+
+df = df[["qmin","xmin","tmin","pmin","rec_sum","gen_sum"]]
 
 
 df["acc"] = df["rec_sum"]/df["gen_sum"]
@@ -112,54 +109,81 @@ df.replace([np.inf, -np.inf], np.nan, inplace=True)
 df.replace(np.nan, 0, inplace=True)
 
 
-t_bins = df['t1'].unique()
-q_bins = df['Q2'].unique()
-x_bins = df['xB'].unique()
-p_bins = df['phi'].unique()
+t_bins = df['tmin'].unique()
+q_bins = df['qmin'].unique()
+x_bins = df['xmin'].unique()
+p_bins = df['pmin'].unique()
 
 p_labels = []
 
 
 for p_bin in p_bins:
-    [start,end] = p_bin.split('-')
-    p_labels.append(int((int(end)+int(start))/2))
+    p_labels.append(str(p_bin+9))
 p_pos = np.arange(len(p_labels))
 
 if DoWipe:
     shutil.rmtree(base_plot_dir) if os.path.isdir(base_plot_dir) else None
 for dir_ending in t_bins:
-        if not os.path.isdir(base_plot_dir+dir_ending):
-            os.makedirs(base_plot_dir+dir_ending)
+        if not os.path.isdir(base_plot_dir+str(dir_ending)):
+            os.makedirs(base_plot_dir+str(dir_ending))
 
 plt.rcParams["font.size"] = "20"
 
+print(df)
 for t_bin in t_bins:
     for q_bin in q_bins:
         for x_bin in x_bins:
-            if TEST2:
-                df_over_phi = df.query("t == '{}' and Q == '{}' and x == '{}'".format(t_bin, q_bin, x_bin))
-            else:
-                df_over_phi = df.query("t1 == '{}' and Q2 == '{}' and xB == '{}'".format(t_bin, q_bin, x_bin))
+            query = "tmin=={} and qmin=={} and xmin=={}".format(t_bin, q_bin, x_bin)
+            print(query)
+            df_over_phi = df.query(query)
             ic(df_over_phi)
+
             #    ax.errorbar(x_c6,tel_c6,fmt='k',yerr=tel_err_c6,marker='x',linestyle="None", ms=10,label="CLAS6 - t+l")
 
-            x = df_over_phi['phi']
-            y = df_over_phi['acc_inv']
-            yerr = df_over_phi['acc_inv_err']
+            # x = df_over_phi['pmin']
+            # y = df_over_phi['acc_inv']
+            # yerr = df_over_phi['acc_inv_err']
 
-            fig, ax = plt.subplots(figsize =(14, 10)) 
-            ax.bar(x, y, yerr=yerr, align='center', alpha=0.5, ecolor='black', capsize=10)
-            ax.set_ylabel('1/Acceptance Correction')
-            ax.set_xticks(p_pos[::2])
-            ax.set_xticklabels(p_labels[::2])
-            ax.set_title('1/Acceptance Correction, $Q^2$ bin: {} GeV$^2$, $x_B$ bin: {}, t bin: {} GeV$^2$'.format(q_bin, x_bin, t_bin))
+            # fig, ax = plt.subplots(figsize =(16, 10)) 
+            # ax.bar(x, y, yerr=yerr, align='center', alpha=0.5, ecolor='black', capsize=10, width=16)
+            # ax.set_ylabel('1/Acceptance Correction')
+            # ax.set_ylim(0,100)
+            # #ax.set_xticks(p_pos[::2])
+            # #ax.set_xticklabels(p_labels[::2])
+            # ax.set_title('1/Acceptance Correction, $Q^2$ bin: {} GeV$^2$, $x_B$ bin: {}, t bin: {} GeV$^2$'.format(q_bin, x_bin, t_bin))
+            # #ax.yaxis.grid(True)
+
+            # if float(q_bin)<10:
+            #     q_label = "0"+str(q_bin)
+
+            # print(q_label)
+
+            # plt_title = base_plot_dir+str(t_bin)+"/x_{}_q_{}_acc_inv.png".format(str(x_bin),q_label)
+            # plt.savefig(plt_title)
+
+            x = df_over_phi['pmin']
+            y = df_over_phi['rec_sum']
+            yg = df_over_phi['gen_sum']
+
+            fig, ax = plt.subplots(figsize =(16, 10)) 
+            ax.bar(x, y, align='center', alpha=1, color="black", capsize=10, width=16)
+            ax.bar(x, yg, align='center', alpha=0.5, color="red", capsize=10, width=16)
+
+            ax.set_ylabel('Simualtions: Gen and Rec Counts')
+            #ax.set_ylim(0,100)
+            #ax.set_xticks(p_pos[::2])
+            #ax.set_xticklabels(p_labels[::2])
+            ax.set_title('Simualtions: Gen and Rec Counts, $Q^2$ bin: {} GeV$^2$, $x_B$ bin: {}, t bin: {} GeV$^2$'.format(q_bin, x_bin, t_bin))
             #ax.yaxis.grid(True)
 
-            q_label = str(q_bin)
-            if float(q_label.split("-")[0])<10:
-                q_label = "0"+q_label.split("-")[0]+"-"+q_label.split("-")[1]
+            if float(q_bin)<10:
+                q_label = "0"+str(q_bin)
 
-            plt_title = base_plot_dir+t_bin+"/x_{}_q_{}_acc_inv.png".format(x_bin,q_label)
+            print(q_label)
+
+            plt_title = base_plot_dir+str(t_bin)+"/x_{}_q_{}_acc_inv.png".format(str(x_bin),q_label)
             plt.savefig(plt_title)
+
+
             plt.close()
 

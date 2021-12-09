@@ -4,8 +4,8 @@ from icecream import ic
 class fs:
 	def __init__(self):
 		self.phibins_test = [0,18,36,54,72,90,108,126,144,162,180,198,216,234,252,270,288,306,324,342,360]
-		self.tbins_test =  [0.15,0.2,0.3]
-		self.xBbins_test = [0.25,.3,0.38]
+		self.tbins_test =  [0.2,0.3,0.4,0.6]
+		self.xBbins_test = [0.25,.3,0.38,0.58]
 		self.q2bins_test = [2,2.5,3]
 		self.phibins =  [0,18,36,54,72,90,108,126,144,162,180,198,216,234,252,270,288,306,324,342,360]
 
