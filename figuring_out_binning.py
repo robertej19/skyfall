@@ -60,8 +60,8 @@ b = False
 c = False
 d = False
 e = False
-f = False
-g = True
+f = True
+g = False
 
 if a:
 

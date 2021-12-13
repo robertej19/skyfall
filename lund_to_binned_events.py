@@ -318,6 +318,7 @@ files = [high_E,low_E]
 convert_lund_to_pkl = True
 convert_pkl_to_events = True
 convert_events_to_bins = True
+get_ratio = True
 
 fs = filestruct.fs()
 
@@ -342,8 +343,8 @@ if convert_events_to_bins:
         df0 = pd.read_pickle(event_dir+filename+"_events.pkl")
 
         q2bins,xBbins, tbins, phibins = fs.q2bins, fs.xBbins, fs.tbins, fs.phibins
-        if True:
-                q2bins,xBbins, tbins, phibins = fs.q2bins_test, fs.xBbins_test, fs.tbins_test, fs.phibins_test
+        #if True:
+        #        q2bins,xBbins, tbins, phibins = fs.q2bins_test, fs.xBbins_test, fs.tbins_test, fs.phibins_test
 
         num_counts = []
 
@@ -393,7 +394,21 @@ if convert_events_to_bins:
         df_minibin.to_pickle(binned_dir+filename+"_binned.pkl")
         print(df_minibin)
 
+if get_ratio:
+    df_low = pd.read_pickle(binned_dir+low_E+"_binned.pkl")
+    df_low = df_low.rename(columns={"counts":"counts_low"})
+    #                    dfout.loc[:,"qmax"] = dfout["qmin"]+0.5
 
+    #df_low.loc[:,"counts_low"] = df_low["counts"]
+    df_high = pd.read_pickle(binned_dir+high_E+"_binned.pkl")
+    df_high = df_high.rename(columns={"counts":"counts_high"})
+
+    
+    df_out = pd.merge(df_high,df_low,how='inner', on=['qmin','xmin','tmin','pmin'])
+    df_out.loc[:,"Energy_ratio"] = df_out["counts_high"]/df_out["counts_low"]
+
+    print(df_out)
+    df_out.to_pickle("EnergyDependenceRatio.pkl")
 
 
 
